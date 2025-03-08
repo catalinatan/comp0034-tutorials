@@ -6,7 +6,7 @@ The 'db' parameter is defined during activity 7.2.
 Complete the code for the quiz tables at the end of the models.py file."""
 from typing import List
 
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import ForeignKey, Integer, String, Text, Date, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tutor.student import db
@@ -140,20 +140,55 @@ class MedalResult(db.Model):
 
 
 class Quiz(db.Model):
-    pass
+    __tablename__ = "quiz"
+
+    quiz_id = mapped_column(Integer, primary_key=True)
+    quiz_name = mapped_column(Integer, nulllable=False)
+    close_date = mapped_column(Date)
+
+    # Relationships
+    student_response: Mapped[List["StudentResponse"]] = relationship(back_populates="quiz")
+    quiz_question: Mapped[List["QuizQuestion"]] = relationship(back_populates="quiz")
 
 
 class Question(db.Model):
-    pass
+    __tablename__ = "question"
 
+    question_id = mapped_column(Integer, primary_key=True)
+    question = mapped_column(text, nullable=False)
+    event_id = mapped_column(Integer, )
+    # Relationships
+    quiz_question: Mapped[List["QuizQuestion"]] = relationship(back_populates="question")
+    answer_choice: Mapped[List["AnswerChoice"]] = relationship(back_populates="question")
 
 class AnswerChoice(db.Model):
-    pass
+    __tablename__ = "answer_choice"
+    ac_id = mapped_column(Integer, primary_key=True)
+    question_id = mapped_column(Integer, ForeignKey("question.question_id"))
+    choice_text = mapped_column(Text)
+    choice_value = mapped_column(Integer)
+    is_correct = mapped_column(Boolean)
+
+    # Relationships
+    question: Mapped["Question"] = relationship("Question", back_populates="answer_choice")
 
 
 class QuizQuestion(db.Model):
-    pass
+    __tablename__ = "quiz_question"
+    quiz_id = mapped_column(Integer, ForeignKey("quiz.quiz_id"), primary_key=True, onupdate="CASCADE", ondelete="CASCADE")
+    question_id = mapped_column(Integer, ForeignKey("question.question_id"), primary_key=True, onupdate="CASCADE", ondelete="CASCADE")
+
+    # Relationships
+    quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="quiz_question")
+    question: Mapped["Question"] = relationship("Question", back_populates="quiz_question")
 
 
 class StudentResponse(db.Model):
-    pass
+    __tablename__ = "student_response"
+
+    response_id = mapped_column(Integer, primary_key=True)
+    student_email = mapped_column(Integer, nullable=False)
+    score = mapped_column(Integer)
+    quiz_id = mapped_column(Integer, ForeignKey("quiz.quiz_id"))
+    # Relationships
+    quiz: Mapped[List["Quiz"]] = relationship(back_populates="student_response")
